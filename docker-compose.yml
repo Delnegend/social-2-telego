@@ -1,0 +1,9 @@
+version: "3"
+services:
+    s2t:
+        image: alpine:latest
+        restart: unless-stopped
+        volumes:
+            - ./.env:/.env
+            - ./app:/app
+        command: "/app"
