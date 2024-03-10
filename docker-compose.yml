@@ -1,6 +1,7 @@
 version: "3"
 services:
-    s2t:
+    social-2-telego:
+        container_name: social-2-telego
         image: alpine:latest
         restart: unless-stopped
         volumes:
