@@ -101,6 +101,10 @@ func (t *Twitter) GetContent() (string, error) {
 	}
 	content := t.rawContent[startIndex : startIndex+endIndex]
 
+	if content == "" {
+		return "", nil
+	}
+
 	// replace all <a> tags with a custom wrapper to be processed later
 	pattern, err := regexp.Compile(`<a href="([^"]+)"[^>]*>([^<]+)</a>`)
 	if err != nil {
