@@ -125,7 +125,7 @@ func ComposeMessage(message string, social social.Social) (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"%s\n[Post](%s) \\| [%s](%s) %s",
+		"%s\n[Post](%s) ESCAPE_CHAR| [%s](%s) %s",
 		content,
 		origUrl,
 		utils.EscapeTelegramChar(name),

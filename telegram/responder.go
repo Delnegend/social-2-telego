@@ -43,7 +43,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 	switch len(media) {
 	case 0:
 		endPoint = "sendMessage"
-		data.Add("text", text)
+		data.Add("text", strings.Replace(text, `ESCAPE_CHAR`, `\`, -1))
 	case 1:
 		if media[0].MediaType == social.MediaTypePhoto {
 			endPoint = "sendPhoto"
@@ -51,7 +51,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 			endPoint = "sendVideo"
 		}
 		data.Add(string(media[0].MediaType), media[0].MediaUrl)
-		data.Add("caption", text)
+		data.Add("caption", strings.Replace(text, `ESCAPE_CHAR`, `\`, -1))
 	default:
 		endPoint = "sendMediaGroup"
 		result := make([]string, 0)
@@ -61,7 +61,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 			fmt.Sprintf(`{"type":"%s","media":"%s","caption":"%s","parse_mode":"MarkdownV2"}`,
 				media[0].MediaType,
 				media[0].MediaUrl,
-				text))
+				strings.Replace(text, `ESCAPE_CHAR`, `\\`, -1)))
 
 		// Add the rest of the media to the result
 		for _, media := range media[1:] {
