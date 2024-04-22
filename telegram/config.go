@@ -2,14 +2,12 @@ package telegram
 
 import (
 	"time"
-
-	"social-2-telego/socials"
 )
 
-type Bot struct {
-	BotToken          string
-	TargetChannel     *string
-	PrefixSocialMatch map[string]socials.Social
+type Config struct {
+	BotToken            string
+	TargetChannel       *string
+	WhitelistedAccounts []string
 
 	// Don't care about these one
 	MessageQueue          chan *Message
