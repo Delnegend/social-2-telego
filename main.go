@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"social-2-telego/socials"
+	get_update "social-2-telego/get_updates"
 	"social-2-telego/telegram"
 
 	"github.com/joho/godotenv"
@@ -33,42 +33,26 @@ func main() {
 
 	targetChannel := os.Getenv("CHANNEL")
 	if targetChannel == "" {
-		slog.Warn("CHANNEL is not set, messages will be sent to the chat where the bot is added")
-	}
-	if chatId := os.Getenv("WHITELISTED"); chatId == "" {
-		slog.Warn("WHITELISTED is not set, everyone can use the bot to send messages to your channel! You can add multiple usernames, @ not included, each separated by a space.")
-	}
-	port := os.Getenv("PORT")
-	if port == "" {
-		slog.Warn("PORT is not set, defaulting to 8080")
-		os.Setenv("PORT", "8080")
+		slog.Info("CHANNEL is not set, messages will be echoed back to the user.")
 	}
 
-	mode := "polling"
-	if enableWebhook := os.Getenv("ENABLE_WEBHOOK"); enableWebhook == "true" {
-		if domain := os.Getenv("DOMAIN"); domain == "" {
-			slog.Error("ENABLE_WEBHOOK is true, but DOMAIN is not set, defaulting to polling")
-		} else {
-			mode = "webhook"
-		}
+	whitelistedAccountsEnv := os.Getenv("WHITELISTED")
+	whitelistedAccounts := strings.Split(whitelistedAccountsEnv, " ")
+	if len(whitelistedAccounts) == 0 {
+		slog.Info("WHITELISTED is not set, everyone can use the bot to send messages to your channel! You can add multiple usernames, @ not included, each separated by a space.")
 	}
 
-	bot := telegram.Bot{
-		BotToken:          token,
-		TargetChannel:     &targetChannel,
-		MessageQueue:      make(chan *telegram.Message, 10),
-		PrefixSocialMatch: socials.PrefixSocialMatch(),
+	bot := telegram.Config{
+		BotToken:            token,
+		TargetChannel:       &targetChannel,
+		MessageQueue:        make(chan *telegram.Message, 10),
+		WhitelistedAccounts: whitelistedAccounts,
 	}
 	go bot.Responder()
 
-	if mode == "webhook" {
-		go bot.RotateWebhook()
-		http.HandleFunc("POST /webhook/{token}", bot.HandleWebhookRequest)
-		http.HandleFunc("POST /webhook", bot.HandleWebhookRequest)
-	} else {
-		bot.DeleteWebhook()
-		go bot.GetUpdates()
+	update_getter := get_update.Config{
+		BotToken:     token,
+		MessageQueue: &bot.MessageQueue,
 	}
-
-	http.ListenAndServe(":"+port, nil)
+	update_getter.Initialize()
 }
