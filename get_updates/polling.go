@@ -1,4 +1,4 @@
-package telegram
+package get_update
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"social-2-telego/telegram"
 	"strconv"
 	"time"
 )
@@ -13,14 +14,14 @@ import (
 type PollingResponse struct {
 	Ok     bool `json:"ok"`
 	Result []struct {
-		UpdateID int     `json:"update_id"`
-		Message  Message `json:"message"`
+		UpdateID int              `json:"update_id"`
+		Message  telegram.Message `json:"message"`
 	} `json:"result"`
 }
 
 // Get one single update
-func (bot *Bot) getUpdate() {
-	resp, err := http.Get("https://api.telegram.org/bot" + bot.BotToken + "/getUpdates?offset=" + strconv.Itoa(bot.Offset))
+func (config *Config) getUpdate() {
+	resp, err := http.Get("https://api.telegram.org/bot" + config.BotToken + "/getUpdates?offset=" + strconv.Itoa(config.Offset))
 	if err != nil {
 		slog.Error("Failed to request to get updates: ", err)
 		return
@@ -40,16 +41,16 @@ func (bot *Bot) getUpdate() {
 	}
 
 	if len(respBody.Result) > 0 {
-		bot.Offset = respBody.Result[len(respBody.Result)-1].UpdateID + 1
+		config.Offset = respBody.Result[len(respBody.Result)-1].UpdateID + 1
 	}
 
 	for _, result := range respBody.Result {
-		bot.MessageQueue <- &result.Message
+		*config.MessageQueue <- &result.Message
 	}
 }
 
 // Continuously get updates
-func (bot *Bot) GetUpdates() {
+func (config *Config) GetUpdates() {
 	delayDur := 3 * time.Second
 	if delayDurEnv := os.Getenv("GET_UPDATE_DELAY"); delayDurEnv != "" {
 		parsedDelayDurEnv, err := time.ParseDuration(delayDurEnv)
@@ -61,7 +62,7 @@ func (bot *Bot) GetUpdates() {
 	}
 
 	for {
-		bot.getUpdate()
+		config.getUpdate()
 		time.Sleep(delayDur)
 	}
 }
