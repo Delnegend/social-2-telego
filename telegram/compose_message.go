@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"social-2-telego/socials"
+	"social-2-telego/social"
 	"social-2-telego/utils"
 	"strings"
 )
@@ -39,7 +39,7 @@ func processHashtags(hashtags string) string {
 }
 
 // (name, username)
-func processArtistNameAndUsername(rawItems []string, social socials.Social) (string, string, error) {
+func processArtistNameAndUsername(rawItems []string, social social.Social) (string, string, error) {
 	var stringToParse string
 	for _, item := range rawItems {
 		if strings.HasPrefix(item, "@") {
@@ -81,7 +81,7 @@ func processArtistNameAndUsername(rawItems []string, social socials.Social) (str
 	return "", "", errors.New("too many arguments for artist name and username")
 }
 
-func ComposeMessage(message string, social socials.Social) (string, error) {
+func ComposeMessage(message string, social social.Social) (string, error) {
 	// Split the message by comma, rm spaces and empty strings
 	slice, err := splitAndCleanup(message)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"social-2-telego/socials"
+	"social-2-telego/social"
 )
 
 type MessageNotSendResponse struct {
@@ -30,7 +30,7 @@ type MessageSentResponse struct {
 	} `json:"message"`
 }
 
-func (bot *Config) sendMessage(chatID string, text string, media []socials.ScrapedMedia) {
+func (bot *Config) sendMessage(chatID string, text string, media []social.ScrapedMedia) {
 	// Initialize the endpoint and data
 	var endPoint string
 	data := url.Values{
@@ -45,7 +45,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []socials.Scrap
 		endPoint = "sendMessage"
 		data.Add("text", text)
 	case 1:
-		if media[0].MediaType == socials.MediaTypePhoto {
+		if media[0].MediaType == social.MediaTypePhoto {
 			endPoint = "sendPhoto"
 		} else {
 			endPoint = "sendVideo"
@@ -127,14 +127,14 @@ mainLoop:
 			}
 		}
 
-		social := socials.NewSocialInstance(message.Text)
-		if social == nil {
+		socialCode := social.NewSocialInstance(message.Text)
+		if socialCode == nil {
 			slog.Warn("no social media matched")
 			continue mainLoop
 		}
 
 		// compose message
-		outgoingText, err := ComposeMessage(message.Text, social)
+		outgoingText, err := ComposeMessage(message.Text, socialCode)
 		if err != nil {
 			slog.Error("failed to compose message", "err", err)
 			bot.sendMessage(strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
@@ -142,7 +142,7 @@ mainLoop:
 		}
 
 		// send message
-		media, err := social.GetMedia()
+		media, err := socialCode.GetMedia()
 		if err != nil {
 			slog.Error("failed to get media", "err", err)
 			continue mainLoop
