@@ -2,9 +2,11 @@ version: "3"
 services:
     social-2-telego:
         container_name: social-2-telego
-        image: alpine:latest
+        image: social-2-telego
+        build:
+            context: .
+            dockerfile: Dockerfile
+        pull_policy: never
         restart: unless-stopped
         volumes:
             - ./.env:/.env
-            - ./app:/app
-        command: "/app"
