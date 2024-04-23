@@ -8,6 +8,7 @@ import (
 	"os"
 	"social-2-telego/telegram"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,7 +46,17 @@ func (config *Config) getUpdate() {
 	}
 
 	for _, result := range respBody.Result {
-		*config.MessageQueue <- &result.Message
+		messages := strings.Split(result.Message.Text, "\n")
+		for _, message := range messages {
+			if message == "" {
+				continue
+			}
+			*config.MessageQueue <- &telegram.Message{
+				Chat: result.Message.Chat,
+				Text: message,
+				From: result.Message.From,
+			}
+		}
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"os"
 	"social-2-telego/telegram"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -168,5 +169,16 @@ func (config *Config) HandleWebhookRequest(w http.ResponseWriter, r *http.Reques
 	if incoming.Message.Text == "" {
 		return
 	}
-	*config.MessageQueue <- &incoming.Message
+
+	messages := strings.Split(incoming.Message.Text, "\n")
+	for _, message := range messages {
+		if message == "" {
+			continue
+		}
+		*config.MessageQueue <- &telegram.Message{
+			Chat: incoming.Message.Chat,
+			Text: message,
+			From: incoming.Message.From,
+		}
+	}
 }
