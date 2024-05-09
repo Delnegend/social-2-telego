@@ -81,6 +81,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 	)
 	if err != nil {
 		slog.Error("Failed to send message", "err", err)
+		return
 	}
 	defer resp.Body.Close()
 
