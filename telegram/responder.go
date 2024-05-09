@@ -80,7 +80,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 		data,
 	)
 	if err != nil {
-		slog.Error("Failed to send message", "err", err)
+		slog.Error("failed to send message", "err", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -100,7 +100,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 
 	// Logging
 	if !respBody.OK {
-		slog.Error("Message not sent", "error_code", respBody.ErrorCode, "description", respBody.Description)
+		slog.Error("message not sent", "error_code", respBody.ErrorCode, "description", respBody.Description)
 		return
 	}
 }

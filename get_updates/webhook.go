@@ -36,7 +36,7 @@ func (config *Config) RotateWebhook() {
 	intervalEnv := os.Getenv("WEBHOOK_TOKEN_ROTATE_INTERVAL")
 	parsedInterval, err := time.ParseDuration(intervalEnv)
 	if err != nil {
-		slog.Error("Failed to parse WEBHOOK_TOKEN_ROTATE_INTERVAL, defaulting to 24h", "msg", err)
+		slog.Error("failed to parse WEBHOOK_TOKEN_ROTATE_INTERVAL, defaulting to 24h", "msg", err)
 	} else {
 		rotateInterval = parsedInterval
 	}
@@ -59,7 +59,7 @@ func (config *Config) setWebhookWithRetry() {
 	retries := 3
 	if retriesEnv := os.Getenv("RETRY_ATTEMPTS"); retriesEnv != "" {
 		if retriesInt, err := strconv.Atoi(retriesEnv); err != nil {
-			slog.Error("Failed to parse RETRY_ATTEMPTS, defaulting to 3", "msg", err)
+			slog.Error("failed to parse RETRY_ATTEMPTS, defaulting to 3", "msg", err)
 		} else {
 			retries = retriesInt
 		}
@@ -122,7 +122,7 @@ func (config *Config) DeleteWebhook() {
 		url.Values{},
 	)
 	if err != nil {
-		slog.Error("Failed to request to delete webhook: ", err)
+		slog.Error("failed to request to delete webhook: ", err)
 	}
 	defer resp.Body.Close()
 
@@ -133,7 +133,7 @@ func (config *Config) DeleteWebhook() {
 		ErrorCode int    `json:"error_code"`
 	}{}
 	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		slog.Error("Failed to decode response: ", err)
+		slog.Error("failed to decode response: ", err)
 	}
 
 	// logging
@@ -164,7 +164,7 @@ func (config *Config) HandleWebhookRequest(w http.ResponseWriter, r *http.Reques
 		Message  telegram.Message `json:"message"`
 	}{}
 	if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
-		slog.Error("Failed to decode webhook request body: ", err)
+		slog.Error("failed to decode webhook request body: ", err)
 	}
 	if incoming.Message.Text == "" {
 		return

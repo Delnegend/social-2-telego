@@ -24,20 +24,20 @@ type PollingResponse struct {
 func (config *Config) getUpdate() {
 	resp, err := http.Get("https://api.telegram.org/bot" + config.BotToken + "/getUpdates?offset=" + strconv.Itoa(config.Offset))
 	if err != nil {
-		slog.Error("Failed to request to get updates: ", err)
+		slog.Error("failed to request to get updates: ", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("Failed to read response body: ", err)
+		slog.Error("failed to read response body: ", err)
 		return
 	}
 
 	var respBody PollingResponse
 	if err = json.Unmarshal(body, &respBody); err != nil {
-		slog.Error("Failed to unmarshal response body: ", err)
+		slog.Error("failed to unmarshal response body: ", err)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (config *Config) GetUpdates() {
 	if delayDurEnv := os.Getenv("GET_UPDATE_DELAY"); delayDurEnv != "" {
 		parsedDelayDurEnv, err := time.ParseDuration(delayDurEnv)
 		if err != nil {
-			slog.Error("Failed to parse GET_UPDATE_DELAY, defaulting to 3s", "msg", err)
+			slog.Error("failed to parse GET_UPDATE_DELAY, defaulting to 3s", "msg", err)
 		} else {
 			delayDur = parsedDelayDurEnv
 		}
