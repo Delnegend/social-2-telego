@@ -45,7 +45,7 @@ func main() {
 	bot := telegram.Config{
 		BotToken:            token,
 		TargetChannel:       &targetChannel,
-		MessageQueue:        make(chan *telegram.Message, 10),
+		MessageQueue:        make(chan *telegram.Message),
 		WhitelistedAccounts: whitelistedAccounts,
 	}
 	go bot.Responder()
