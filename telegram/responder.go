@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"social-2-telego/social"
 )
@@ -116,44 +117,53 @@ func contains(arr []string, str string) bool {
 
 // Continuously watching new messages from MessageQueue and respond to them
 func (bot *Config) Responder() {
-mainLoop:
-	for message := range bot.MessageQueue {
-		slog.Debug("received message", "from", message.From.Username, "text", message.Text)
+	const numWorkers = 5
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-		// check if the user is authorized
-		if len(bot.WhitelistedAccounts) != 0 {
-			if !contains(bot.WhitelistedAccounts, message.From.Username) {
-				slog.Warn("Unauthorized user", "username", message.From.Username)
-				continue mainLoop
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			for message := range bot.MessageQueue {
+				slog.Debug("received message", "from", message.From.Username, "text", message.Text)
+
+				// check if the user is authorized
+				if len(bot.WhitelistedAccounts) != 0 {
+					if !contains(bot.WhitelistedAccounts, message.From.Username) {
+						slog.Warn("Unauthorized user", "username", message.From.Username)
+						continue
+					}
+				}
+
+				socialCode := social.NewSocialInstance(message.Text)
+				if socialCode == nil {
+					slog.Warn("no social media matched")
+					continue
+				}
+
+				// compose message
+				outgoingText, err := ComposeMessage(message.Text, socialCode)
+				if err != nil {
+					slog.Error("failed to compose message", "err", err)
+					bot.sendMessage(strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
+					continue
+				}
+
+				// send message
+				media, err := socialCode.GetMedia()
+				if err != nil {
+					slog.Error("failed to get media", "err", err)
+					continue
+				}
+
+				if *bot.TargetChannel != "" {
+					bot.sendMessage(*bot.TargetChannel, outgoingText, media)
+					continue
+				}
+				bot.sendMessage(strconv.Itoa(message.From.ID), outgoingText, media)
 			}
-		}
-
-		socialCode := social.NewSocialInstance(message.Text)
-		if socialCode == nil {
-			slog.Warn("no social media matched")
-			continue mainLoop
-		}
-
-		// compose message
-		outgoingText, err := ComposeMessage(message.Text, socialCode)
-		if err != nil {
-			slog.Error("failed to compose message", "err", err)
-			bot.sendMessage(strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
-			continue mainLoop
-		}
-
-		// send message
-		media, err := socialCode.GetMedia()
-		if err != nil {
-			slog.Error("failed to get media", "err", err)
-			continue mainLoop
-		}
-
-		if *bot.TargetChannel != "" {
-			bot.sendMessage(*bot.TargetChannel, outgoingText, media)
-			continue mainLoop
-		}
-		bot.sendMessage(strconv.Itoa(message.From.ID), outgoingText, media)
+		}()
 	}
+
+	wg.Wait()
 	log.Fatal("responder stopped for some reason, this should not happen")
 }
