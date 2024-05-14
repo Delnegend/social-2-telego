@@ -35,7 +35,7 @@ func processHashtags(hashtags string) string {
 			newSlice = append(newSlice, utils.EscapeTelegramChar(item))
 		}
 	}
-	return "\\[" + strings.Join(newSlice, " ") + "\\]"
+	return "ESCAPE_CHAR[" + strings.Join(newSlice, " ") + "ESCAPE_CHAR]"
 }
 
 // (name, username)
