@@ -27,5 +27,5 @@ https://x.com/foo/status/123, @bar Bar, #baz
 
 ## Update
 ```bash
-dc down && git stash && git pull --rebase && git stash apply && dc up -d --build
+docker down && git stash && git pull --rebase && git stash apply && docker up -d --build
 ```
