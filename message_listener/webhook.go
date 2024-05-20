@@ -1,4 +1,4 @@
-package get_update
+package message_listener
 
 import (
 	"encoding/json"
@@ -10,14 +10,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"social-2-telego/telegram"
+	"social-2-telego/utils"
 	"strconv"
 	"strings"
 	"time"
 )
 
 // Generate a new token
-func NewToken() string {
+func newToken() string {
 	charset := "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	result := make([]byte, 30)
@@ -30,7 +30,7 @@ func NewToken() string {
 }
 
 // Change the webhook token every WEBHOOK_TOKEN_ROTATE_INTERVAL
-func (config *Config) RotateWebhook() {
+func (ml *MessageListener) rotateWebhook() {
 	rotateInterval := 24 * time.Hour
 
 	intervalEnv := os.Getenv("WEBHOOK_TOKEN_ROTATE_INTERVAL")
@@ -43,19 +43,19 @@ func (config *Config) RotateWebhook() {
 
 	for {
 		if rotateInterval == 0 {
-			config.WebhookToken = ""
-			config.setWebhookWithRetry()
+			ml.webhookToken = ""
+			ml.setWebhookWithRetry()
 			break
 		}
-		config.WebhookToken = NewToken()
-		config.setWebhookWithRetry()
+		ml.webhookToken = newToken()
+		ml.setWebhookWithRetry()
 
 		slog.Info("Webhook token rotated")
 		time.Sleep(rotateInterval)
 	}
 }
 
-func (config *Config) setWebhookWithRetry() {
+func (ml *MessageListener) setWebhookWithRetry() {
 	retries := 3
 	if retriesEnv := os.Getenv("RETRY_ATTEMPTS"); retriesEnv != "" {
 		if retriesInt, err := strconv.Atoi(retriesEnv); err != nil {
@@ -65,7 +65,7 @@ func (config *Config) setWebhookWithRetry() {
 		}
 	}
 	for range retries {
-		if err := config.setWebhook(); err != nil {
+		if err := ml.setWebhook(); err != nil {
 			slog.Warn("failed to set webhook, cooling down for 3 seconds", "msg", err)
 			time.Sleep(5 * time.Second)
 		} else {
@@ -77,16 +77,16 @@ func (config *Config) setWebhookWithRetry() {
 }
 
 // Set webhook for bot: <domain>/webhook/<token>
-func (config *Config) setWebhook() error {
+func (ml *MessageListener) setWebhook() error {
 	webhookUrl := os.Getenv("DOMAIN") + "/webhook"
-	if config.WebhookToken != "" {
-		webhookUrl = os.Getenv("DOMAIN") + "/webhook/" + config.WebhookToken
+	if ml.webhookToken != "" {
+		webhookUrl = os.Getenv("DOMAIN") + "/webhook/" + ml.webhookToken
 	}
 
 	slog.Info("Setting webhook", "url", webhookUrl)
 
 	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+config.BotToken+"/setWebhook",
+		"https://api.telegram.org/bot"+ml.appState.BotToken()+"/setWebhook",
 		url.Values{"url": {webhookUrl}},
 	)
 	if err != nil {
@@ -115,10 +115,10 @@ func (config *Config) setWebhook() error {
 	return fmt.Errorf("failed to set webhook: %s", respBody.Desc)
 }
 
-func (config *Config) DeleteWebhook() {
+func (ml *MessageListener) deleteWebhook() {
 	// create the request
 	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+config.BotToken+"/deleteWebhook",
+		"https://api.telegram.org/bot"+ml.appState.BotToken()+"/deleteWebhook",
 		url.Values{},
 	)
 	if err != nil {
@@ -147,11 +147,13 @@ func (config *Config) DeleteWebhook() {
 	)
 }
 
-func (config *Config) HandleWebhookRequest(w http.ResponseWriter, r *http.Request) {
+func (ml *MessageListener) handleWebhookRequest(w http.ResponseWriter, r *http.Request) {
+	slog.Debug("Received webhook request")
+
 	// check for the webhook token if set
-	if config.WebhookToken != "" {
+	if ml.webhookToken != "" {
 		webhookToken := r.PathValue("token")
-		if webhookToken != config.WebhookToken {
+		if webhookToken != ml.webhookToken {
 			slog.Warn("Invalid webhook token")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -160,8 +162,8 @@ func (config *Config) HandleWebhookRequest(w http.ResponseWriter, r *http.Reques
 
 	// parse, check non-empty request body, send to channel
 	incoming := struct {
-		UpdateID int              `json:"update_id"`
-		Message  telegram.Message `json:"message"`
+		UpdateID int                   `json:"update_id"`
+		Message  utils.IncomingMessage `json:"message"`
 	}{}
 	if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
 		slog.Error("failed to decode webhook request body: ", err)
@@ -175,7 +177,7 @@ func (config *Config) HandleWebhookRequest(w http.ResponseWriter, r *http.Reques
 		if message == "" {
 			continue
 		}
-		*config.MessageQueue <- &telegram.Message{
+		ml.appState.MsgQueue <- utils.IncomingMessage{
 			Chat: incoming.Message.Chat,
 			Text: message,
 			From: incoming.Message.From,
