@@ -13,25 +13,10 @@ import (
 	"sync"
 
 	"social-2-telego/social"
+	"social-2-telego/utils"
 )
 
-type MessageNotSendResponse struct {
-	OK          bool   `json:"ok"`
-	ErrorCode   int    `json:"error_code"`
-	Description string `json:"description"`
-}
-
-type MessageSentResponse struct {
-	UpdateID int `json:"update_id"`
-	Message  struct {
-		Chat struct {
-			ID int `json:"id"`
-		} `json:"chat"`
-		Text string `json:"text"`
-	} `json:"message"`
-}
-
-func (bot *Config) sendMessage(chatID string, text string, media []social.ScrapedMedia) {
+func sendMessage(appState *utils.AppState, chatID string, text string, media []social.ScrapedMedia) {
 	// Initialize the endpoint and data
 	var endPoint string
 	data := url.Values{
@@ -77,7 +62,7 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 
 	// Initialize the request
 	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+bot.BotToken+"/"+endPoint,
+		"https://api.telegram.org/bot"+appState.BotToken()+"/"+endPoint,
 		data,
 	)
 	if err != nil {
@@ -106,32 +91,18 @@ func (bot *Config) sendMessage(chatID string, text string, media []social.Scrape
 	}
 }
 
-func contains(arr []string, str string) bool {
-	for _, a := range arr {
-		if a == str {
-			return true
-		}
-	}
-	return false
-}
-
 // Continuously watching new messages from MessageQueue and respond to them
-func (bot *Config) Responder() {
-	const numWorkers = 5
+func InitResponder(appState *utils.AppState) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < appState.NumWorkers(); i++ {
 		go func() {
-			for message := range bot.MessageQueue {
+			for message := range appState.MsgQueue {
 				slog.Debug("received message", "from", message.From.Username, "text", message.Text)
 
-				// check if the user is authorized
-				if len(bot.WhitelistedAccounts) != 0 {
-					if !contains(bot.WhitelistedAccounts, message.From.Username) {
-						slog.Warn("Unauthorized user", "username", message.From.Username)
-						continue
-					}
+				if !appState.IsAccountAllowed(message.From.Username) {
+					slog.Warn("Unauthorized user", "username", message.From.Username)
 				}
 
 				socialCode := social.NewSocialInstance(message.Text)
@@ -144,7 +115,7 @@ func (bot *Config) Responder() {
 				outgoingText, err := ComposeMessage(message.Text, socialCode)
 				if err != nil {
 					slog.Error("failed to compose message", "err", err)
-					bot.sendMessage(strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
+					sendMessage(appState, strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
 					continue
 				}
 
@@ -155,11 +126,11 @@ func (bot *Config) Responder() {
 					continue
 				}
 
-				if *bot.TargetChannel != "" {
-					bot.sendMessage(*bot.TargetChannel, outgoingText, media)
+				if appState.TargetChannel() != "" {
+					sendMessage(appState, appState.TargetChannel(), outgoingText, media)
 					continue
 				}
-				bot.sendMessage(strconv.Itoa(message.From.ID), outgoingText, media)
+				sendMessage(appState, strconv.Itoa(message.From.ID), outgoingText, media)
 			}
 		}()
 	}
