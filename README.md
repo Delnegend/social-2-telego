@@ -24,3 +24,8 @@ https://x.com/foo/status/123, @bar Bar, #baz
 - First element must match the URL pattern
 - Second/third element are the artist's name/username overwrite and hashtags. They are optional and the position can be exchanged.
 - The artist's name/username overwrite element must start with `@` and the hashtags element must start with `#`.
+
+## Update
+```bash
+dc down && git stash && git pull --rebase && git stash apply && dc up -d --build
+```
