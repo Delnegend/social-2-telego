@@ -8,5 +8,18 @@ services:
             dockerfile: Dockerfile
         pull_policy: never
         restart: unless-stopped
-        volumes:
-            - ./.env:/.env
+        environment:
+            PORT: 8080
+            DOMAIN: https://example.com
+            ARTIST_DB: https://artistdb.example.com/{username}
+            WHITELISTED:
+
+            BOT_TOKEN:
+            CHANNEL:
+
+            # Webhook method
+            RETRY_ATTEMPTS: 3
+            WEBHOOK_TOKEN_ROTATE_INTERVAL: 24h
+
+            # getUpdates method
+            GET_UPDATE_DELAY: 3s
