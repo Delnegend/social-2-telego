@@ -154,18 +154,15 @@ func (t *Twitter) GetUsername() (string, error) {
 
 // ===== URL stuffs ===== //
 
-func (t *Twitter) SetURL(url string) error {
-	if err := t.isValidURL(url); err != nil {
+func (t *Twitter) SetURL(url_ string) error {
+	match, err := regexp.MatchString(`https:\/\/((twitter)|x).com\/([\w_]{1,15})\/status\/\d+`, url_)
+	if err != nil {
 		return err
 	}
-
-	if strings.Contains(url, "?") {
-		url = strings.Split(url, "?")[0]
+	if !match {
+		return fmt.Errorf("invalid url for twitter")
 	}
-	t.url = url
-
-	}
-
+	t.url = strings.Replace(strings.Split(url_, "?")[0], "twitter.com", "x.com", 1)
 	return nil
 }
 
@@ -176,10 +173,5 @@ func (t *Twitter) GetURL() (string, error) {
 	return t.url, nil
 }
 
-func (t *Twitter) isValidURL(url string) error {
-	pattern := `https:\/\/((twitter)|x).com\/([\w_]{1,15})\/status\/\d+`
-	if !regexp.MustCompile(pattern).MatchString(url) {
-		return fmt.Errorf("invalid url for twitter")
 	}
-	return nil
 }

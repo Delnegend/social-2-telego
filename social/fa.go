@@ -62,12 +62,15 @@ func (f *FA) GetUsername() (string, error) {
 
 // ===== URL stuffs ======
 
-func (f *FA) SetURL(url string) error {
-	if err := f.isValidURL(url); err != nil {
+func (f *FA) SetURL(url_ string) error {
+	match, err := regexp.MatchString(`https:\/\/www\.furaffinity\.net\/view\/\d+`, url_)
+	if err != nil {
 		return err
 	}
-
-	f.url = url
+	if !match {
+		return fmt.Errorf("invalid url for furaffinity")
+	}
+	f.url = url_
 	return nil
 }
 
@@ -79,12 +82,4 @@ func (f *FA) GetURL() (string, error) {
 }
 
 	}
-
-func (f *FA) isValidURL(url string) error {
-	pattern := `https:\/\/www\.furaffinity\.net\/view\/\d+`
-	if !regexp.MustCompile(pattern).MatchString(url) {
-		return fmt.Errorf("invalid url for furaffinity")
-	}
-
-	return nil
 }
