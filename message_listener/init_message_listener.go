@@ -17,8 +17,8 @@ func InitMessageListender(appState *utils.AppState) {
 		offset:   0,
 		appState: appState,
 	}
-	if ml.appState.WebhookDomain() != "" {
 		go ml.rotateWebhook()
+	if ml.appState.GetUseWebhook() {
 		http.HandleFunc("POST /webhook/{token}", ml.handleWebhookRequest)
 		http.HandleFunc("POST /webhook", ml.handleWebhookRequest)
 
