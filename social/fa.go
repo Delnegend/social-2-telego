@@ -85,5 +85,9 @@ func (f *FA) GetURL() (string, error) {
 	return f.url, nil
 }
 
+func (f *FA) GetProfileURL(username string) (string, error) {
+	if username == "" {
+		return "", fmt.Errorf("username is empty")
 	}
+	return fmt.Sprintf("https://www.furaffinity.net/user/%s", username), nil
 }

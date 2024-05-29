@@ -178,5 +178,9 @@ func (t *Twitter) GetURL() (string, error) {
 	return t.url, nil
 }
 
+func (t *Twitter) GetProfileURL(username string) (string, error) {
+	if username == "" {
+		return "", errors.New("username is empty")
 	}
+	return fmt.Sprintf("https://x.com/%s", username), nil
 }
