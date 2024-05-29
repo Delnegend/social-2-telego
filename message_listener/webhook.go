@@ -2,58 +2,16 @@ package message_listener
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 	"social-2-telego/utils"
-	"strconv"
 	"strings"
-	"time"
 )
 
-// Generate a new token
-func newToken() string {
-	charset := "abcdefghijklmnopqrstuvwxyz" +
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	result := make([]byte, 30)
-	var seededRand *rand.Rand = rand.New(
-		rand.NewSource(time.Now().UnixNano()))
-	for i := range result {
-		result[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(result)
-}
-
-// Change the webhook token every WEBHOOK_TOKEN_ROTATE_INTERVAL
-func (ml *MessageListener) rotateWebhook() {
-	rotateInterval := 24 * time.Hour
-
-	intervalEnv := os.Getenv("WEBHOOK_TOKEN_ROTATE_INTERVAL")
-	parsedInterval, err := time.ParseDuration(intervalEnv)
-	if err != nil {
-		slog.Error("failed to parse WEBHOOK_TOKEN_ROTATE_INTERVAL, defaulting to 24h", "msg", err)
-	} else {
-		rotateInterval = parsedInterval
-	}
-
-	for {
-		if rotateInterval == 0 {
-			ml.webhookToken = ""
-			ml.setWebhookWithRetry()
-			break
 		}
-		ml.webhookToken = newToken()
-		ml.setWebhookWithRetry()
-
-		slog.Info("Webhook token rotated")
-		time.Sleep(rotateInterval)
-	}
-}
 
 func (ml *MessageListener) setWebhookWithRetry() {
 	retries := 3
