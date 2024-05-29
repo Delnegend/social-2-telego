@@ -112,7 +112,7 @@ func InitResponder(appState *utils.AppState) {
 				}
 
 				// compose message
-				outgoingText, err := ComposeMessage(message.Text, socialCode)
+				outgoingText, err := ComposeMessage(appState, message.Text, socialCode)
 				if err != nil {
 					slog.Error("failed to compose message", "err", err)
 					sendMessage(appState, strconv.Itoa(message.Chat.ID), "failed to compose message: "+err.Error(), nil)
