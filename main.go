@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -14,15 +13,28 @@ import (
 	"github.com/lmittmann/tint"
 )
 
+func getLogLevel() slog.Level {
+	switch os.Getenv("LOG_LEVEL") {
+	case "INFO":
+		return slog.LevelInfo
+	case "WARN":
+		return slog.LevelWarn
+	case "ERROR":
+		return slog.LevelError
+	default:
+		return slog.LevelDebug
+	}
+}
+
 func init() {
 	slog.SetDefault(slog.New(
 		tint.NewHandler(os.Stderr, &tint.Options{
-			Level:      slog.LevelDebug,
+			Level:      getLogLevel(),
 			TimeFormat: time.RFC1123Z,
 		}),
 	))
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		slog.Info(err.Error())
 	}
 }
 
