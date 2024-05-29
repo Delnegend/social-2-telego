@@ -14,7 +14,8 @@ import (
 
 // Get one single update
 func (ml *MessageListener) getOneUpdate() {
-	resp, err := http.Get("https://api.telegram.org/bot" + ml.appState.BotToken() + "/getUpdates?offset=" + strconv.Itoa(ml.offset))
+	path_ := fmt.Sprintf("https://api.telegram.org/bot%s/getUpdates?offset=%d", ml.appState.GetBotToken(), ml.offset)
+	resp, err := http.Get(path_)
 	if err != nil {
 		slog.Error("failed to request to get updates: ", err)
 		return
