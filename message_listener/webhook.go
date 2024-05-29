@@ -11,66 +11,49 @@ import (
 	"strings"
 )
 
+func (ml *MessageListener) setWebhook() {
+	for range ml.appState.GetRetrySetWebhookAttempt() {
+		webhookUrl := ml.appState.GetWebhookDomain() + "/webhook"
+		slog.Info("setting webhook", "url", webhookUrl)
+
+		// create a request
+		resp, err := http.PostForm(
+			"https://api.telegram.org/bot"+ml.appState.GetBotToken()+"/setWebhook",
+			url.Values{
+				"url":          {webhookUrl},
+				"secret_token": {ml.appState.GetWebhookSecret()},
+			},
+		)
+		if err != nil {
+			slog.Error("failed to set webhook: ", err)
+			continue
 		}
 
-func (ml *MessageListener) setWebhookWithRetry() {
-	retries := 3
-	if retriesEnv := os.Getenv("RETRY_ATTEMPTS"); retriesEnv != "" {
-		if retriesInt, err := strconv.Atoi(retriesEnv); err != nil {
-			slog.Error("failed to parse RETRY_ATTEMPTS, defaulting to 3", "msg", err)
-		} else {
-			retries = retriesInt
+		// read the response
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		respBody := struct {
+			OK     bool   `json:"ok"`
+			Result bool   `json:"result"`
+			Desc   string `json:"description"`
+		}{}
+		if err := json.Unmarshal(body, &respBody); err != nil {
+			slog.Error("failed to unmarshal response when setting webhook: ", err)
+			continue
 		}
-	}
-	for range retries {
-		if err := ml.setWebhook(); err != nil {
-			slog.Warn("failed to set webhook, cooling down for 3 seconds", "msg", err)
-			time.Sleep(5 * time.Second)
-		} else {
+
+		// handle the response
+		if respBody.OK && respBody.Result {
+			slog.Info("webhook set successfully",
+				"result", respBody.Result,
+				"desc", respBody.Desc,
+			)
 			return
 		}
+		slog.Error("failed to set webhook, retrying...")
 	}
 
-	log.Fatalf("failed to set webhook after %d retries\n", retries)
-}
-
-// Set webhook for bot: <domain>/webhook/<token>
-func (ml *MessageListener) setWebhook() error {
-	webhookUrl := os.Getenv("DOMAIN") + "/webhook"
-	if ml.webhookToken != "" {
-		webhookUrl = os.Getenv("DOMAIN") + "/webhook/" + ml.webhookToken
-	}
-
-	slog.Info("Setting webhook", "url", webhookUrl)
-
-	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+ml.appState.BotToken()+"/setWebhook",
-		url.Values{"url": {webhookUrl}},
-	)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-
-	respBody := struct {
-		OK     bool   `json:"ok"`
-		Result bool   `json:"result"`
-		Desc   string `json:"description"`
-	}{}
-	if err := json.Unmarshal(body, &respBody); err != nil {
-		return fmt.Errorf("failed to unmarshal response when setting webhook: %w", err)
-	}
-
-	if respBody.OK && respBody.Result {
-		slog.Info("webhook set successfully",
-			"result", respBody.Result,
-			"desc", respBody.Desc,
-		)
-		return nil
-	}
-	return fmt.Errorf("failed to set webhook: %s", respBody.Desc)
+	log.Fatalf("failed to set webhook after %d retries\n", ml.appState.GetRetrySetWebhookAttempt())
 }
 
 func (ml *MessageListener) deleteWebhook() {
