@@ -39,29 +39,31 @@ func (f *FA) Scrape() error {
 }
 
 func (f *FA) GetContent() (string, error) {
-	if f.rawContent == "" {
-		if err := f.Scrape(); err != nil {
-			return "", err
-		}
-	}
-	return "", nil
+	// if f.rawContent == "" {
+	// 	if err := f.Scrape(); err != nil {
+	// 		return "", err
+	// 	}
+	// }
+	return "", fmt.Errorf("work in progress")
 }
 
 func (f *FA) GetMedia() ([]ScrapedMedia, error) {
-	if f.rawContent == "" {
-		if err := f.Scrape(); err != nil {
-			return nil, err
-		}
-	}
-	return []ScrapedMedia{}, nil
+	// if f.rawContent == "" {
+	// 	if err := f.Scrape(); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+	// return []ScrapedMedia{}, nil
+
+	return nil, fmt.Errorf("work in progress")
 }
 
 func (f *FA) GetName() (string, error) {
-	return "", nil
+	return "", fmt.Errorf("work in progress")
 }
 
 func (f *FA) GetUsername() (string, error) {
-	return "", nil
+	return "", fmt.Errorf("work in progress")
 }
 
 // ===== URL stuffs ======
