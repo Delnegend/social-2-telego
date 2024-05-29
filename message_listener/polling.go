@@ -2,12 +2,11 @@ package message_listener
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"social-2-telego/utils"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -60,18 +59,8 @@ func (ml *MessageListener) getOneUpdate() {
 
 // Continuously get updates
 func (ml *MessageListener) GetUpdates() {
-	delayDur := 3 * time.Second
-	if delayDurEnv := os.Getenv("GET_UPDATE_DELAY"); delayDurEnv != "" {
-		parsedDelayDurEnv, err := time.ParseDuration(delayDurEnv)
-		if err != nil {
-			slog.Error("failed to parse GET_UPDATE_DELAY, defaulting to 3s", "msg", err)
-		} else {
-			delayDur = parsedDelayDurEnv
-		}
-	}
-
 	for {
 		ml.getOneUpdate()
-		time.Sleep(delayDur)
+		time.Sleep(ml.appState.GetGetUpdatesInterval())
 	}
 }
