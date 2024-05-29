@@ -10,16 +10,17 @@ services:
         restart: unless-stopped
         environment:
             PORT: 8080
-            DOMAIN: https://example.com
-            ARTIST_DB: https://artistdb.example.com/{username}
-            WHITELISTED:
+
+            USE_WEBHOOK: "true"
+            WEBHOOK_DOMAIN: https://example.com
+            WEBHOOK_SECRET:
+            RETRY_SET_WEBHOOK_ATTEMPT: 3
+
+            GET_UPDATES_INTERVAL: 3s
 
             BOT_TOKEN:
-            CHANNEL:
+            ARTIST_DB_DOMAIN: https://artistdb.example.com/{username}
+            ALLOWED_USERS: "username1,username2"
+            TARGET_CHANNEL:
 
-            # Webhook method
-            RETRY_ATTEMPTS: 3
-            WEBHOOK_TOKEN_ROTATE_INTERVAL: 24h
-
-            # getUpdates method
-            GET_UPDATE_DELAY: 3s
+            NUM_WORKERS: 5
