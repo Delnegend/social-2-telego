@@ -62,7 +62,7 @@ func sendMessage(appState *utils.AppState, chatID string, text string, media []s
 
 	// Initialize the request
 	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+appState.BotToken()+"/"+endPoint,
+		"https://api.telegram.org/bot"+appState.GetBotToken()+"/"+endPoint,
 		data,
 	)
 	if err != nil {
@@ -96,7 +96,7 @@ func InitResponder(appState *utils.AppState) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	for i := 0; i < appState.NumWorkers(); i++ {
+	for i := 0; i < appState.GetNumWorkers(); i++ {
 		go func() {
 			for message := range appState.MsgQueue {
 				slog.Debug("received message", "from", message.From.Username, "text", message.Text)
@@ -126,8 +126,8 @@ func InitResponder(appState *utils.AppState) {
 					continue
 				}
 
-				if appState.TargetChannel() != "" {
-					sendMessage(appState, appState.TargetChannel(), outgoingText, media)
+				if appState.GetTargetChannel() != "" {
+					sendMessage(appState, appState.GetTargetChannel(), outgoingText, media)
 					continue
 				}
 				sendMessage(appState, strconv.Itoa(message.From.ID), outgoingText, media)
