@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"social-2-telego/social"
 	"social-2-telego/utils"
 	"strings"
@@ -81,7 +80,7 @@ func processArtistNameAndUsername(rawItems []string, social social.Social) (stri
 	return "", "", errors.New("too many arguments for artist name and username")
 }
 
-func ComposeMessage(message string, social social.Social) (string, error) {
+func ComposeMessage(appState *utils.AppState, message string, social social.Social) (string, error) {
 	// Split the message by comma, rm spaces and empty strings
 	slice, err := splitAndCleanup(message)
 	if err != nil {
@@ -112,7 +111,15 @@ func ComposeMessage(message string, social social.Social) (string, error) {
 		return "", err
 	}
 
-	artistLink := strings.Replace(os.Getenv("ARTIST_DB"), "{username}", username, 1)
+	var artistProfileURL string
+	if appState.GetArtistDBDomain() == "" {
+		artistProfileURL, err = social.GetProfileURL(username)
+		if err != nil {
+			return "", fmt.Errorf("failed to get profile URL: %w", err)
+		}
+	} else {
+		artistProfileURL = strings.Replace(appState.GetArtistDBDomain(), "{username}", username, 1)
+	}
 
 	origUrl, err := social.GetURL()
 	if err != nil {
@@ -129,7 +136,7 @@ func ComposeMessage(message string, social social.Social) (string, error) {
 		content,
 		origUrl,
 		utils.EscapeTelegramChar(name),
-		artistLink,
+		artistProfileURL,
 		hashtags,
 	), nil
 }
