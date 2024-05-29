@@ -27,7 +27,7 @@ func init() {
 }
 
 func main() {
-	appState := utils.InitAppState()
+	appState := utils.NewAppState()
 
 	go telegram.InitResponder(appState)
 	message_listener.InitMessageListender(appState)
