@@ -102,7 +102,7 @@ func InitResponder(appState *utils.AppState) {
 				slog.Debug("received message", "from", message.From.Username, "text", message.Text)
 
 				if !appState.IsAccountAllowed(message.From.Username) {
-					slog.Warn("Unauthorized user", "username", message.From.Username)
+					slog.Warn("unauthorized user", "username", message.From.Username)
 				}
 
 				socialCode := social.NewSocialInstance(message.Text)
