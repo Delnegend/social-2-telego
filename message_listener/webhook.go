@@ -59,7 +59,7 @@ func (ml *MessageListener) setWebhook() {
 func (ml *MessageListener) deleteWebhook() {
 	// create the request
 	resp, err := http.PostForm(
-		"https://api.telegram.org/bot"+ml.appState.BotToken()+"/deleteWebhook",
+		"https://api.telegram.org/bot"+ml.appState.GetBotToken()+"/deleteWebhook",
 		url.Values{},
 	)
 	if err != nil {
