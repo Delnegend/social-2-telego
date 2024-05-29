@@ -22,8 +22,8 @@ func InitMessageListender(appState *utils.AppState) {
 		http.HandleFunc("POST /webhook/{token}", ml.handleWebhookRequest)
 		http.HandleFunc("POST /webhook", ml.handleWebhookRequest)
 
-		slog.Info("listening on port " + ml.appState.Port())
-		http.ListenAndServe(":"+ml.appState.Port(), nil)
+		slog.Info("listening on port " + ml.appState.GetPort())
+		http.ListenAndServe(":"+ml.appState.GetPort(), nil)
 	}
 	slog.Info("polling updates")
 	ml.deleteWebhook()
