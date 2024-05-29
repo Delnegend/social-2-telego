@@ -5,13 +5,11 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 type FA struct {
 	rawContent string
 	url        string
-	embedUrl   string
 }
 
 func (f *FA) Scrape() error {
@@ -70,8 +68,6 @@ func (f *FA) SetURL(url string) error {
 	}
 
 	f.url = url
-	f.embedUrl = strings.Replace(url, "furaffinity.net", "fxfuraffinity.net", 1)
-
 	return nil
 }
 
@@ -82,12 +78,7 @@ func (f *FA) GetURL() (string, error) {
 	return f.url, nil
 }
 
-func (f *FA) GetEmbedUrl() (string, error) {
-	if f.embedUrl == "" {
-		return "", fmt.Errorf("url is not set")
 	}
-	return f.embedUrl, nil
-}
 
 func (f *FA) isValidURL(url string) error {
 	pattern := `https:\/\/www\.furaffinity\.net\/view\/\d+`

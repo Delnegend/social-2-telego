@@ -14,7 +14,6 @@ import (
 type Twitter struct {
 	rawContent string
 	url        string
-	embedUrl   string
 }
 
 func (t *Twitter) Scrape() error {
@@ -165,12 +164,7 @@ func (t *Twitter) SetURL(url string) error {
 	}
 	t.url = url
 
-	embedUrl := strings.Replace(url, "twitter.com", "i.fxtwitter.com", 1)
-	embedUrl = strings.Replace(embedUrl, "x.com", "i.fxtwitter.com", 1)
-	if strings.Contains(url, "?") {
-		embedUrl = strings.Split(url, "?")[0]
 	}
-	t.embedUrl = embedUrl
 
 	return nil
 }
@@ -180,12 +174,6 @@ func (t *Twitter) GetURL() (string, error) {
 		return "", errors.New("url is not set")
 	}
 	return t.url, nil
-}
-func (t *Twitter) GetEmbedUrl() (string, error) {
-	if t.url == "" {
-		return "", errors.New("url is not set")
-	}
-	return t.embedUrl, nil
 }
 
 func (t *Twitter) isValidURL(url string) error {

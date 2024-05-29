@@ -13,7 +13,6 @@ type Social interface {
 	// Basic URL stuffs
 	SetURL(string) error
 	GetURL() (string, error)
-	GetEmbedUrl() (string, error)
 }
 
 type MediaType string
