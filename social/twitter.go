@@ -17,7 +17,12 @@ type Twitter struct {
 }
 
 func (t *Twitter) Scrape() error {
-	req, err := http.NewRequest("GET", t.embedUrl, nil)
+	url_, err := t.GetURL()
+	if err != nil {
+		return err
+	}
+	path := strings.Replace(url_, "x.com", "fxtwitter.com", 1)
+	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return err
 	}

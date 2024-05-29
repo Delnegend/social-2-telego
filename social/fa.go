@@ -13,7 +13,11 @@ type FA struct {
 }
 
 func (f *FA) Scrape() error {
-	req, err := http.NewRequest("GET", f.embedUrl, nil)
+	url_, err := f.GetURL()
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("GET", url_, nil)
 	if err != nil {
 		return err
 	}
