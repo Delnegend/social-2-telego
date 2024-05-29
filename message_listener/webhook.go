@@ -79,17 +79,17 @@ func (ml *MessageListener) deleteWebhook() {
 
 	// logging
 	if respBody.OK {
-		slog.Info("Webhook deleted", "description", respBody.Desc)
+		slog.Info("webhook deleted", "description", respBody.Desc)
 		return
 	}
-	slog.Warn("Can't delete webhook",
+	slog.Warn("can't delete webhook",
 		"error_code", respBody.ErrorCode,
 		"description", respBody.Desc,
 	)
 }
 
 func (ml *MessageListener) handleWebhookRequest(w http.ResponseWriter, r *http.Request) {
-	slog.Debug("Received webhook request")
+	slog.Debug("received webhook request")
 
 	// check for the webhook token if set
 	if ml.webhookToken != "" {
