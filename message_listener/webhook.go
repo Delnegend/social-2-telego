@@ -89,8 +89,6 @@ func (ml *MessageListener) deleteWebhook() {
 }
 
 func (ml *MessageListener) handleWebhookRequest(w http.ResponseWriter, r *http.Request) {
-	slog.Debug("received webhook request")
-
 	// authenticate the request
 	if r.Header.Get("X-Telegram-Bot-Api-Secret-Token") != ml.appState.GetWebhookSecret() {
 		slog.Info("invalid webhook secret token")
