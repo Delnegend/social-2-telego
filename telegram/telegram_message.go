@@ -122,14 +122,12 @@ func (tmc *TelegramMessage) serializeContent(doubleEscape bool) (string, error) 
 		return fmt.Sprintf(" %s[%s%s]", escapeChar, hashtags, escapeChar)
 	}()
 
-	tmc.postURL = utils.EscapeSpecialChars(tmc.postURL, escapeChar)
-	tmc.username = utils.EscapeSpecialChars(tmc.username, escapeChar)
 	return fmt.Sprintf("%s[Post](%s) %s| [%s](https://artistdb.delnegend.com/%s)%s",
 		content,
-		tmc.postURL,
+		utils.EscapeSpecialChars(tmc.postURL, escapeChar),
 		escapeChar,
-		tmc.displayName,
-		tmc.username,
+		utils.EscapeSpecialChars(tmc.displayName, escapeChar),
+		utils.EscapeSpecialChars(tmc.username, escapeChar),
 		hashtags,
 	), nil
 }
