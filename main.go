@@ -39,8 +39,17 @@ func init() {
 }
 
 func main() {
+	// This one contains all the environment variables
+	// and a message channel to send messages to
 	appState := utils.NewAppState()
 
-	go telegram.InitResponder(appState)
-	message_listener.InitMessageListender(appState)
+	// This one listens to a channel and responds when there's a message, it's
+	// where all the magic happens. When something goes wrong, it's likely to be
+	// happening here
+	go telegram.Responder(appState)
+
+	// This one listens to updates from Telegram (webhook or long-polling) and
+	// sends them to the message channel. This should not be breaking unless
+	// Telegram changes their API
+	message_listener.InitMessageListener(appState)
 }
