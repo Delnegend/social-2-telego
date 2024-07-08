@@ -16,13 +16,13 @@ func (ml *MessageListener) getOneUpdate() {
 	path_ := fmt.Sprintf("https://api.telegram.org/bot%s/getUpdates?offset=%d", ml.appState.GetBotToken(), ml.offset)
 	resp, err := http.Get(path_)
 	if err != nil {
-		slog.Error("failed to request to get updates: ", err)
+		slog.Error("failed to request to get updates: ", "err", err)
 		return
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("failed to read response body: ", err)
+		slog.Error("failed to read response body: ", "err", err)
 		return
 	}
 
@@ -34,7 +34,7 @@ func (ml *MessageListener) getOneUpdate() {
 		} `json:"result"`
 	}
 	if err = json.Unmarshal(body, &respBody); err != nil {
-		slog.Error("failed to unmarshal response body: ", err)
+		slog.Error("failed to unmarshal response body: ", "err", err)
 		return
 	}
 

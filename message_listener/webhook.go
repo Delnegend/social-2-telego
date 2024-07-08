@@ -25,7 +25,7 @@ func (ml *MessageListener) setWebhook() {
 			},
 		)
 		if err != nil {
-			slog.Error("failed to set webhook: ", err)
+			slog.Error("failed to set webhook: ", "err", err)
 			continue
 		}
 
@@ -38,7 +38,7 @@ func (ml *MessageListener) setWebhook() {
 			Desc   string `json:"description"`
 		}{}
 		if err := json.Unmarshal(body, &respBody); err != nil {
-			slog.Error("failed to unmarshal response when setting webhook: ", err)
+			slog.Error("failed to unmarshal response when setting webhook: ", "err", err)
 			continue
 		}
 
@@ -63,7 +63,7 @@ func (ml *MessageListener) deleteWebhook() {
 		url.Values{},
 	)
 	if err != nil {
-		slog.Error("failed to request to delete webhook: ", err)
+		slog.Error("failed to request to delete webhook: ", "err", err)
 	}
 	defer resp.Body.Close()
 
@@ -74,7 +74,7 @@ func (ml *MessageListener) deleteWebhook() {
 		ErrorCode int    `json:"error_code"`
 	}{}
 	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		slog.Error("failed to decode response: ", err)
+		slog.Error("failed to decode response: ", "err", err)
 	}
 
 	// logging
@@ -114,7 +114,7 @@ func (ml *MessageListener) handleWebhookRequest(w http.ResponseWriter, r *http.R
 		Message  utils.IncomingMessage `json:"message"`
 	}{}
 	if err := json.NewDecoder(r.Body).Decode(&incoming); err != nil {
-		slog.Error("failed to decode webhook request body: ", err)
+		slog.Error("failed to decode webhook request body: ", "err", err)
 	}
 	if incoming.Message.Text == "" {
 		return
