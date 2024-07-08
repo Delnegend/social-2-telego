@@ -1,19 +1,24 @@
 package social
 
-import "strings"
+import (
+	"regexp"
+	"social-2-telego/utils"
+	"strings"
+)
+
+var (
+	htmlUrlRgx            = regexp.MustCompile(`<a href="([^"]+)"[^>]*>([^<]+)</a>`)
+	htmlUrlPlaceholderRgx = regexp.MustCompile(`HLSTART ([^ ]+) HLSPLIT ([^ ]+) HLEND`)
+	htmlParaRgx           = regexp.MustCompile(`<p>([^<]+)</p>`)
+)
 
 type Social interface {
-	// Scraping
-	Scrape() error
-	GetContent() (string, error)
-	GetMedia() ([]ScrapedMedia, error)
-	GetName() (string, error)
-	GetUsername() (string, error)
+	SetAppState(appState *utils.AppState)
+	SetURL(url string) error
 
-	// Basic URL stuffs
-	SetURL(string) error
-	GetURL() (string, error)
-	GetProfileURL(string) (string, error)
+	GetMarkdownContent() (func(string) string, error)
+	GetUsername() (string, error)
+	GetMedia() ([]ScrapedMedia, error)
 }
 
 type MediaType string
@@ -31,9 +36,9 @@ type ScrapedMedia struct {
 func NewSocialInstance(url string) Social {
 	switch {
 	case strings.HasPrefix(url, "https://twitter.com/"):
-		return &Twitter{}
+		return &X{}
 	case strings.HasPrefix(url, "https://x.com/"):
-		return &Twitter{}
+		return &X{}
 	case strings.HasPrefix(url, "https://www.furaffinity.net/view/"):
 		return &FA{}
 	default:
