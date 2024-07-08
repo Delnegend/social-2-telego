@@ -1,0 +1,35 @@
+services:
+    social-2-telego:
+        container_name: social-2-telego
+        image: social-2-telego
+        build:
+            context: .
+            dockerfile: Dockerfile
+        pull_policy: never
+        restart: unless-stopped
+        environment:
+            # everything webhook related, once USE_WEBHOOK is false then the
+            # rest of the options are ignored
+            USE_WEBHOOK: true
+            PORT: 8080
+            WEBHOOK_DOMAIN: https://example.com
+            WEBHOOK_SECRET: # only contains alphanumeric, underscore, and hyphen
+            RETRY_SET_WEBHOOK_ATTEMPT: 3 # retry to set webhook if it fails
+
+            # long-polling gets fewer options
+            GET_UPDATES_INTERVAL: 3s
+
+            # === required ===
+            BOT_TOKEN:
+            ARTIST_DB_DOMAIN: https://artistdb.example.com/{username}
+            ALLOWED_USERS: "username1,username2"
+
+            # === optional ===
+            # either the channel ID or the channel's handle,
+            # leave blank to echo back to the user
+            TARGET_CHANNEL:
+            # number of concurrent workers to process the messages
+            NUM_WORKERS: 5
+            # required if scraping FurAffinity
+            FA_COOKIE_A:
+            FA_COOKIE_B:
