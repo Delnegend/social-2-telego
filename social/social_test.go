@@ -6,7 +6,7 @@ import (
 )
 
 func TestValidateTwitter(t *testing.T) {
-	instance := social.Twitter{}
+	instance := social.X{}
 
 	if err := instance.SetURL("https://twitter.com/loremipsum/status/1234567890"); err != nil {
 		t.Errorf("Error: %v", err)
