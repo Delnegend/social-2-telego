@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"log/slog"
 	"net/http"
 	"regexp"
 	"social-2-telego/utils"
@@ -77,7 +76,6 @@ func (t *X) GetMarkdownContent() (func(string) string, error) {
 
 	// extract the content
 	slice := xContentRegex.FindStringSubmatch(t.rawContent)
-	slog.Debug("x.GetMarkdownContent", "slice", slice)
 	if len(slice) < 3 {
 		return nil, fmt.Errorf("x.GetMarkdownContent: expected 3 submatches from rawContent")
 	}
