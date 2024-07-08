@@ -12,20 +12,24 @@ type MessageListener struct {
 	webhookToken string
 }
 
-func InitMessageListender(appState *utils.AppState) {
+// Either launch a http server for webhook
+// or poll updates from Telegram's servers
+func InitMessageListener(appState *utils.AppState) {
 	ml := &MessageListener{
 		offset:   0,
 		appState: appState,
 	}
-	if ml.appState.GetUseWebhook() {
+	switch ml.appState.GetUseWebhook() {
+	case true:
 		ml.setWebhook()
 		http.HandleFunc("POST /webhook/{token}", ml.handleWebhookRequest)
 		http.HandleFunc("POST /webhook", ml.handleWebhookRequest)
 
 		slog.Info("listening on port " + ml.appState.GetPort())
 		http.ListenAndServe(":"+ml.appState.GetPort(), nil)
+	case false:
+		slog.Info("polling updates")
+		ml.deleteWebhook()
+		go ml.GetUpdates()
 	}
-	slog.Info("polling updates")
-	ml.deleteWebhook()
-	go ml.GetUpdates()
 }
