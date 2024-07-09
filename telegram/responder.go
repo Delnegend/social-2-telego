@@ -113,7 +113,7 @@ func Responder(appState *utils.AppState) {
 				}
 
 				// add necessary data to the message struct
-				teleMsg := NewTelegramMessage(appState)
+				teleMsg := TelegramMessage{}
 				teleMsg.
 					SetContent(mdContent).
 					SetArtistNameAndUsername(authorInfo).

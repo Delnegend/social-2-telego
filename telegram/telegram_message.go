@@ -21,20 +21,12 @@ const (
 )
 
 type TelegramMessage struct {
-	appState *utils.AppState
-
 	content     func(string) string
 	postURL     string
 	username    string
 	displayName string
 	hashtags    []string
 	media       []social.ScrapedMedia
-}
-
-func NewTelegramMessage(appState *utils.AppState) *TelegramMessage {
-	return &TelegramMessage{
-		appState: appState,
-	}
 }
 
 // Set the content from the raw HTML to the message
@@ -105,10 +97,6 @@ func (tmc *TelegramMessage) SetPostURL(url string) *TelegramMessage {
 
 // Serialize the content (aka caption, or the message) to a string
 func (tmc *TelegramMessage) serializeContent(doubleEscape bool) (string, error) {
-	if tmc.appState == nil {
-		return "", fmt.Errorf("TelegramMsgComposer.ToData: appState is nil, use NewTelegramMessage to create a new instance")
-	}
-
 	switch {
 	case tmc.postURL == "":
 		return "", fmt.Errorf("TelegramMsgComposer.Serialize: postURL is empty")
@@ -123,12 +111,7 @@ func (tmc *TelegramMessage) serializeContent(doubleEscape bool) (string, error) 
 
 	content := tmc.content(escapeChar)
 	if content != "" {
-		switch tmc.appState.GetUseExpandableBlockquote() {
-		case true:
-			content = fmt.Sprintf("**>%s\n", content)
-		case false:
-			content = fmt.Sprintf(">%s\n", content)
-		}
+		content = fmt.Sprintf(">%s\n", strings.Join(strings.Split(content, "\n"), "\n>"))
 	}
 
 	hashtags := func() string {
