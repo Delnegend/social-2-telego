@@ -33,3 +33,4 @@ services:
             # required if scraping FurAffinity
             FA_COOKIE_A:
             FA_COOKIE_B:
+            USE_EXPANDABLE_BLOCKQUOTE: false

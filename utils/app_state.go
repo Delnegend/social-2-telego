@@ -25,10 +25,11 @@ type AppState struct {
 	artistDBDomain string
 	allowedUsers   map[string]interface{}
 
-	targetChannel string
-	numWorker     int
-	faCookieA     string
-	faCookieB     string
+	targetChannel           string
+	numWorker               int
+	faCookieA               string
+	faCookieB               string
+	useExpandableBlockquote bool
 
 	MsgQueue chan IncomingMessage
 }
@@ -171,6 +172,10 @@ func NewAppState() *AppState {
 			}
 			return faCookieB
 		}(),
+		useExpandableBlockquote: func() bool {
+			useExpandableBlockquote := os.Getenv("USE_EXPANDABLE_BLOCKQUOTE")
+			return strings.ToLower(useExpandableBlockquote) == "true"
+		}(),
 
 		MsgQueue: make(chan IncomingMessage),
 	}
@@ -244,4 +249,9 @@ func (c *AppState) GetFaCookieA() string {
 // Get the FuraAffinity cookie B
 func (c *AppState) GetFaCookieB() string {
 	return c.faCookieB
+}
+
+// Get whether to use the expandable blockquote
+func (c *AppState) GetUseExpandableBlockquote() bool {
+	return c.useExpandableBlockquote
 }
