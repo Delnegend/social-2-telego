@@ -94,7 +94,7 @@ func (t *X) GetMarkdownContent() (func(string) string, error) {
 
 	// replace those links and paragraphs with actual markdown syntax
 	content = htmlUrlPlaceholderRgx.ReplaceAllString(content, "[$1]($2)")
-	content = strings.ReplaceAll(content, `NEWLINE`, "\n>\n>")
+	content = strings.ReplaceAll(content, `NEWLINE`, "\n\n")
 
 	// add a space between consecutive links
 	content = strings.ReplaceAll(content, `)[`, `) [`)
