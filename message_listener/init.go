@@ -22,11 +22,11 @@ func InitMessageListener(appState *utils.AppState) {
 	switch ml.appState.GetUseWebhook() {
 	case true:
 		ml.setWebhook()
-		http.HandleFunc("POST /webhook/{token}", ml.handleWebhookRequest)
 		http.HandleFunc("POST /webhook", ml.handleWebhookRequest)
-
 		slog.Info("listening on port " + ml.appState.GetPort())
-		http.ListenAndServe(":"+ml.appState.GetPort(), nil)
+		if err := http.ListenAndServe(":"+ml.appState.GetPort(), nil); err != nil {
+			slog.Error("failed to start webhook server: ", "err", err)
+		}
 	case false:
 		slog.Info("polling updates")
 		ml.deleteWebhook()
