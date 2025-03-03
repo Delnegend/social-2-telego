@@ -5,37 +5,31 @@ import (
 	"os"
 	"time"
 
-	"social-2-telego/message_listener"
-	"social-2-telego/telegram"
-	"social-2-telego/utils"
+	"social-2-telego/backend/telegram"
+	"social-2-telego/backend/utils"
 
-	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
 )
 
-func getLogLevel() slog.Level {
+func init() {
+	var level slog.Level
 	switch os.Getenv("LOG_LEVEL") {
 	case "INFO":
-		return slog.LevelInfo
+		level = slog.LevelInfo
 	case "WARN":
-		return slog.LevelWarn
+		level = slog.LevelWarn
 	case "ERROR":
-		return slog.LevelError
+		level = slog.LevelError
 	default:
-		return slog.LevelDebug
+		level = slog.LevelDebug
 	}
-}
 
-func init() {
 	slog.SetDefault(slog.New(
 		tint.NewHandler(os.Stderr, &tint.Options{
-			Level:      getLogLevel(),
+			Level:      level,
 			TimeFormat: time.RFC1123Z,
 		}),
 	))
-	if err := godotenv.Load(); err != nil {
-		slog.Info(err.Error())
-	}
 }
 
 func main() {
@@ -51,5 +45,11 @@ func main() {
 	// This one listens to updates from Telegram (webhook or long-polling) and
 	// sends them to the message channel. This should not be breaking unless
 	// Telegram changes their API
-	message_listener.InitMessageListener(appState)
+	switch appState.GetUseWebhook() {
+	case true:
+		telegram.Webhooking(appState)
+	case false:
+		slog.Info("polling updates")
+		telegram.Polling(appState)
+	}
 }

@@ -19,11 +19,11 @@ type AppState struct {
 	webhookSecret          string
 	retrySetWebhookAttempt int
 
-	getUpdatesInterval time.Duration
+	pollingInterval time.Duration
 
 	botToken       string
 	artistDBDomain string
-	allowedUsers   map[string]interface{}
+	allowedUsers   map[string]struct{}
 
 	targetChannel string
 	numWorker     int
@@ -33,15 +33,57 @@ type AppState struct {
 	MsgQueue chan IncomingMessage
 }
 
+func getEnv(key string) string {
+	envsFromFile := make(map[string]string)
+
+	// only read the env file if it exists
+	if _, err := os.Stat(".env"); err == nil {
+		envFile, err := os.ReadFile(".env")
+		if err != nil {
+			log.Fatal("failed to read .env file: ", err)
+		}
+
+		// split the file into lines
+		lines := strings.Split(string(envFile), "\n")
+
+		// iterate over the lines and split them into key-value pairs
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			pair := strings.SplitN(line, "=", 2)
+			if len(pair) != 2 {
+				continue
+			}
+			envsFromFile[strings.TrimSpace(pair[0])] = strings.TrimSpace(pair[1])
+		}
+	}
+
+	value, ok := envsFromFile[key]
+	if ok {
+		return value
+	}
+	return os.Getenv(key)
+}
+
 // Create a new AppState instance
 func NewAppState() *AppState {
+	useWebhook := strings.ToLower(getEnv("USE_WEBHOOK")) == "true"
+
+	if useWebhook {
+		slog.Info("using webhook to communicate with Telegram")
+	} else {
+		slog.Info("webhook is disabled, using long-polling to communicate with Telegram")
+	}
+
 	return &AppState{
-		useWebhook: func() bool {
-			useWebhook := os.Getenv("USE_WEBHOOK")
-			return strings.ToLower(useWebhook) == "true"
-		}(),
+		useWebhook: useWebhook,
 		port: func() string {
-			port := os.Getenv("PORT")
+			if !useWebhook {
+				return ""
+			}
+
+			port := getEnv("PORT")
 			if port == "" {
 				slog.Warn("PORT is not set, defaulting to 8080")
 				return "8080"
@@ -58,7 +100,11 @@ func NewAppState() *AppState {
 			return fmt.Sprintf("%d", portInt)
 		}(),
 		webhookDomain: func() string {
-			webhookDomain := os.Getenv("WEBHOOK_DOMAIN")
+			if !useWebhook {
+				return ""
+			}
+
+			webhookDomain := getEnv("WEBHOOK_DOMAIN")
 			if _, err := url.ParseRequestURI(webhookDomain); err != nil {
 				slog.Warn("WEBHOOK_DOMAIN is not a valid URL, webhook will not be enabled")
 				return ""
@@ -66,7 +112,11 @@ func NewAppState() *AppState {
 			return webhookDomain
 		}(),
 		webhookSecret: func() string {
-			webhookSecret := os.Getenv("WEBHOOK_SECRET")
+			if !useWebhook {
+				return ""
+			}
+
+			webhookSecret := getEnv("WEBHOOK_SECRET")
 			if match, _ := regexp.MatchString(`[^a-zA-Z0-9_-]`, webhookSecret); match {
 				slog.Warn("WEBHOOK_SECRET must only contain alphanumeric characters, underscores, and hyphens, webhook will not be enabled")
 				return ""
@@ -74,7 +124,11 @@ func NewAppState() *AppState {
 			return webhookSecret
 		}(),
 		retrySetWebhookAttempt: func() int {
-			retrySetWebhookAttempt := os.Getenv("RETRY_SET_WEBHOOK_ATTEMPT")
+			if !useWebhook {
+				return 0
+			}
+
+			retrySetWebhookAttempt := getEnv("RETRY_SET_WEBHOOK_ATTEMPT")
 			retrySetWebhookAttemptInt, err := strconv.Atoi(retrySetWebhookAttempt)
 			if err != nil {
 				slog.Warn("RETRY_SET_WEBHOOK_ATTEMPT must be an integer, defaulting to 3")
@@ -83,46 +137,36 @@ func NewAppState() *AppState {
 			return retrySetWebhookAttemptInt
 		}(),
 
-		getUpdatesInterval: func() time.Duration {
-			getUpdatesInterval := os.Getenv("GET_UPDATES_INTERVAL")
-			getUpdatesIntervalDur, err := time.ParseDuration(getUpdatesInterval)
+		pollingInterval: func() time.Duration {
+			if useWebhook {
+				return 0
+			}
+
+			val := getEnv("POLLING_INTERVAL")
+			valDur, err := time.ParseDuration(val)
 			if err != nil {
-				slog.Warn("GET_UPDATES_INTERVAL is not a valid duration, defaulting to 1s")
+				slog.Warn("POLLING_INTERVAL is not a valid duration, defaulting to 1s")
 				return time.Second
 			}
-			return getUpdatesIntervalDur
+			return valDur
 		}(),
 
 		botToken: func() string {
-			botToken := os.Getenv("BOT_TOKEN")
+			botToken := getEnv("BOT_TOKEN")
 			if botToken == "" {
 				log.Fatal("BOT_TOKEN must be set")
 			}
 			return botToken
 		}(),
-		artistDBDomain: func() string {
-			artistDBDomain := os.Getenv("ARTIST_DB_DOMAIN")
-			if _, err := url.ParseRequestURI(artistDBDomain); err != nil {
-				slog.Error("ARTIST_DB_DOMAIN is not a valid URL")
-				os.Exit(1)
-			}
 
-			if !strings.Contains(artistDBDomain, "{username}") {
-				slog.Error("ARTIST_DB_DOMAIN must contain {username}")
-				os.Exit(1)
-			}
-
-			return artistDBDomain
-		}(),
-
-		allowedUsers: func() map[string]interface{} {
-			allowedAccounts := os.Getenv("ALLOWED_USERS")
+		allowedUsers: func() map[string]struct{} {
+			allowedAccounts := getEnv("ALLOWED_USERS")
 			if allowedAccounts == "" {
 				slog.Warn("ALLOWED_USERS is not set, everyone can use the bot to send messages to your channel! You can add multiple usernames, @ is optional, each separated by a space")
-				return make(map[string]interface{})
+				return make(map[string]struct{})
 			}
 			slice := strings.Split(allowedAccounts, ",")
-			allowedAccountsMap := make(map[string]interface{})
+			allowedAccountsMap := make(map[string]struct{})
 			for _, account := range slice {
 				account = strings.TrimPrefix(account, "@")
 				allowedAccountsMap[account] = struct{}{}
@@ -131,7 +175,7 @@ func NewAppState() *AppState {
 		}(),
 
 		targetChannel: func() string {
-			targetChannel := os.Getenv("TARGET_CHANNEL")
+			targetChannel := getEnv("TARGET_CHANNEL")
 			if targetChannel == "" {
 				slog.Info("TARGET_CHANNEL is not set, messages will be echoed back to the user")
 				return ""
@@ -139,7 +183,7 @@ func NewAppState() *AppState {
 			return targetChannel
 		}(),
 		numWorker: func() int {
-			numWorkers := os.Getenv("NUM_WORKERS")
+			numWorkers := getEnv("NUM_WORKERS")
 			if numWorkers == "" {
 				slog.Warn("NUM_WORKERS is not set, defaulting to 5")
 				return 5
@@ -152,7 +196,7 @@ func NewAppState() *AppState {
 			return numWorkersInt
 		}(),
 		faCookieA: func() string {
-			faCookieA := os.Getenv("FA_COOKIE_A")
+			faCookieA := getEnv("FA_COOKIE_A")
 			if faCookieA == "" {
 				slog.Warn("FA_COOKIE_A is not set, scraping FuraAffinity will not be possible")
 				return ""
@@ -160,7 +204,7 @@ func NewAppState() *AppState {
 			return faCookieA
 		}(),
 		faCookieB: func() string {
-			faCookieB := os.Getenv("FA_COOKIE_B")
+			faCookieB := getEnv("FA_COOKIE_B")
 			if faCookieB == "" {
 				slog.Warn("FA_COOKIE_B is not set, scraping FuraAffinity will not be possible")
 				return ""
@@ -198,8 +242,8 @@ func (c *AppState) GetRetrySetWebhookAttempt() int {
 }
 
 // Get the interval for getting updates
-func (c *AppState) GetGetUpdatesInterval() time.Duration {
-	return c.getUpdatesInterval
+func (c *AppState) GetPollingInterval() time.Duration {
+	return c.pollingInterval
 }
 
 // Get the bot token
@@ -223,7 +267,10 @@ func (c *AppState) IsAuthorized(account string) bool {
 }
 
 // Get the target channel
-func (c *AppState) GetTargetChannel() string {
+func (c *AppState) GetTargetChannel(fallback string) string {
+	if c.targetChannel == "" {
+		return fallback
+	}
 	return c.targetChannel
 }
 
